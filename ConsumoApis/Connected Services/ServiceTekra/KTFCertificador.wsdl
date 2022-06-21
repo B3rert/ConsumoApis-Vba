@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:urn="http://apicertificacion.desa.tekra.com.gt:8080/certificacion/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="KTFCertificador" targetNamespace="http://apicertificacion.desa.tekra.com.gt:8080/certificacion/wsdl/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://apicertificacion.desa.tekra.com.gt:8080/certificacion/wsdl/">
+      <xsd:element name="CertificacionDocumento">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="1" maxOccurs="1" name="Autenticacion" type="urn:AutenticacionCertificacion" />
+            <xsd:element minOccurs="1" maxOccurs="1" name="Documento" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="CertificacionDocumentoResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="ResultadoCertificacion" type="xsd:string" />
+            <xsd:element name="DocumentoCertificado" type="xsd:string" />
+            <xsd:element name="RepresentacionGrafica" type="xsd:string" />
+            <xsd:element name="CodigoQR" type="xsd:string" />
+            <xsd:element name="NITCertificador" type="xsd:string" />
+            <xsd:element name="NombreCertificador" type="xsd:string" />
+            <xsd:element name="NumeroAutorizacion" type="xsd:string" />
+            <xsd:element name="NumeroDocumento" type="xsd:integer" />
+            <xsd:element name="SerieDocumento" type="xsd:string" />
+            <xsd:element name="FechaHoraCertificacion" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:complexType name="AutenticacionCertificacion">
+        <xsd:sequence>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_usuario">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="100" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_clave">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="500" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_cliente" type="xsd:int" />
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_contrato" type="xsd:int" />
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_id_origen">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="500" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_ip_origen">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="500" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_firmar_emisor">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="2" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="0" maxOccurs="1" name="pn_validar_identificador">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="2" />
+                <xsd:maxLength value="2" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="0" maxOccurs="1" name="pn_retornar_pdf">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="2" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="AutenticacionAnulacion">
+        <xsd:sequence>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_usuario">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="100" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_clave">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="500" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_cliente" type="xsd:int" />
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_contrato" type="xsd:int" />
+          <xsd:element minOccurs="1" maxOccurs="1" name="pn_firmar_emisor">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="2" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element minOccurs="0" maxOccurs="1" name="pn_retornar_pdf">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:minLength value="1" />
+                <xsd:maxLength value="2" />
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="AnulacionDocumento">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="1" maxOccurs="1" name="Autenticacion" type="urn:AutenticacionAnulacion" />
+            <xsd:element minOccurs="1" maxOccurs="1" name="Documento" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="AnulacionDocumentoResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="ResultadoAnulacion" type="xsd:string" />
+            <xsd:element name="AnulacionCertificada" type="xsd:string" />
+            <xsd:element name="RepresentacionGrafica" type="xsd:string" />
+            <xsd:element name="CodigoQR" type="xsd:string" />
+            <xsd:element name="NITCertificador" type="xsd:string" />
+            <xsd:element name="NombreCertificador" type="xsd:string" />
+            <xsd:element name="NumeroAutorizacion" type="xsd:string" />
+            <xsd:element name="NumeroDocumento" type="xsd:integer" />
+            <xsd:element name="SerieDocumento" type="xsd:string" />
+            <xsd:element name="FechaHoraCertificacion" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="CertificacionDocumentoRequest">
+    <wsdl:part name="in" element="urn:CertificacionDocumento" />
+  </wsdl:message>
+  <wsdl:message name="CertificacionDocumentoResponse">
+    <wsdl:part name="out" element="urn:CertificacionDocumentoResponse" />
+  </wsdl:message>
+  <wsdl:message name="AnulacionDocumentoRequest">
+    <wsdl:part name="in" element="urn:AnulacionDocumento" />
+  </wsdl:message>
+  <wsdl:message name="AnulacionDocumentoResponse">
+    <wsdl:part name="out" element="urn:AnulacionDocumentoResponse" />
+  </wsdl:message>
+  <wsdl:portType name="KTFCertificador">
+    <wsdl:operation name="CertificacionDocumento">
+      <wsdl:input message="urn:CertificacionDocumentoRequest" />
+      <wsdl:output message="urn:CertificacionDocumentoResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="AnulacionDocumento">
+      <wsdl:input message="urn:AnulacionDocumentoRequest" />
+      <wsdl:output message="urn:AnulacionDocumentoResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="KTFCertificadorSOAP" type="urn:KTFCertificador">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="CertificacionDocumento">
+      <soap:operation soapAction="http://apicertificacion.desa.tekra.com.gt:8080/certificacion/wsdl/CertificacionDocumento" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AnulacionDocumento">
+      <soap:operation soapAction="http://apicertificacion.desa.tekra.com.gt:8080/certificacion/wsdl/AnulacionDocumento" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="KTFCertificador">
+    <wsdl:port name="KTFCertificadorSOAP" binding="urn:KTFCertificadorSOAP">
+      <soap:address location="http://apicertificacion.desa.tekra.com.gt:8080/certificacion/servicio.php" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
