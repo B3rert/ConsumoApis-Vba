@@ -203,18 +203,12 @@ Public Class WebForm1
 
         Dim request As HttpWebRequest = CType(WebRequest.Create(destinationUrl), HttpWebRequest)
         Dim bytes As Byte()
-
-
-        Dim headers As NameValueCollection = New NameValueCollection From {
-            {"Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcGVuaWQiXSwiZXhwIjoxNjYzNjA3MDkxLCJhdXRob3JpdGllcyI6WyJST0xFX0VNSVNPUiJdLCJqdGkiOiJkZmZhYTJkNS01YTM1LTQ2NTYtYjMyMS1iYzU0Y2E2NDBkYTkiLCJjbGllbnRfaWQiOiI4MzQ2NjM3MSJ9.K4nODaoSRTQ2rPTLhXl_cw_aQ0bbZxP2hpf9_G7EnJ7wVdvkn6gXNgy1sqF74Gb8wFm2Rbhb3oIs1XWTz5llteJtNyYyrF4PbpMF5DAb9_ytg4mtQF92aonZ5jmKLUEyVwpLhhXa6s2YyuLHi0NlLJTpB0MSS1jYUlsAuUcpO0ojwVirXnWaUbp8wtV4smB5sw9CkoMgqpF8ZX4b6xk1SHHJYljf0f-vieNsZoV_GglUSujoShCpwqHbDO5s3lbCCb8qEb4rmmDAecJOKklSNMmumgu6O2wn88weybnsa7cyUzLvUPpCWgMrqshDCRkgNLx6_mxHI_bTav9_tjpFEA"}
-        }
-
-        bytes = System.Text.Encoding.ASCII.GetBytes(requestXml)
+        bytes = Encoding.ASCII.GetBytes(requestXml)
         request.ContentType = "application/xml"
         request.Accept = "application/xml"
         request.ContentLength = bytes.Length
         request.Method = "POST"
-        request.Headers.Add(headers)
+        request.Headers.Add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcGVuaWQiXSwiZXhwIjoxNjYzNjA3MDkxLCJhdXRob3JpdGllcyI6WyJST0xFX0VNSVNPUiJdLCJqdGkiOiJkZmZhYTJkNS01YTM1LTQ2NTYtYjMyMS1iYzU0Y2E2NDBkYTkiLCJjbGllbnRfaWQiOiI4MzQ2NjM3MSJ9.K4nODaoSRTQ2rPTLhXl_cw_aQ0bbZxP2hpf9_G7EnJ7wVdvkn6gXNgy1sqF74Gb8wFm2Rbhb3oIs1XWTz5llteJtNyYyrF4PbpMF5DAb9_ytg4mtQF92aonZ5jmKLUEyVwpLhhXa6s2YyuLHi0NlLJTpB0MSS1jYUlsAuUcpO0ojwVirXnWaUbp8wtV4smB5sw9CkoMgqpF8ZX4b6xk1SHHJYljf0f-vieNsZoV_GglUSujoShCpwqHbDO5s3lbCCb8qEb4rmmDAecJOKklSNMmumgu6O2wn88weybnsa7cyUzLvUPpCWgMrqshDCRkgNLx6_mxHI_bTav9_tjpFEA")
         Dim requestStream As Stream = request.GetRequestStream()
         requestStream.Write(bytes, 0, bytes.Length)
         requestStream.Close()
