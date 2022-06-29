@@ -18,6 +18,11 @@ Public Class WebForm1
         'Dim res = postJsonBody(token, urlUnificado, documento.xml_Contenido, param)
 
         Dim res = getDataApis()
+
+        'Update doc
+
+
+
         MsgBox(res)
 
     End Sub
@@ -174,7 +179,11 @@ Public Class WebForm1
 
                     Using streamReaderApi As StreamReader = New StreamReader(streamApi)
                         Dim response As String = streamReaderApi.ReadToEnd()
-                        Return response
+
+                        Dim responseUpdate = updateDocDatabase(response, documento.d_Id_Unc)
+
+                        Return responseUpdate
+
                     End Using
                 End Using
             End Using
@@ -269,32 +278,17 @@ Public Class WebForm1
     End Function
 
 
-    Public Function postJsonBody(ByVal token, ByVal url, ByVal body, ByVal param) As String
-
-        Dim ObjParam = New Dictionary(Of String, Object)
-
-        Dim subs As String() = param.Split(","c)
-        For Each i In subs
-
-            Dim subs2 As String() = i.Split(":"c)
-
-            subs2(1) = subs2(1).Replace("{token}", token)
-            subs2(1) = subs2(1).Replace("{xml_Contenido}", body)
-            subs2(1) = subs2(1).Replace("{d_Id_Unc}", "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270")
-
-            ObjParam.Add(subs2(0), subs2(1))
-        Next i
+    Public Function updateDocDatabase(ByVal doc, ByVal uuid) As String
 
 
-
+        Dim url = "https://localhost:7156/api/DocumentoXml"
         Dim Obj = New Dictionary(Of String, Object) From {
-            {"token", token},
-            {"body", body},
-            {"uiid", "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"}
+            {"usuario", "sa"},
+            {"documento", doc},
+            {"uuid", uuid}
         }
 
-        Dim strCuenta = JsonConvert.SerializeObject(ObjParam)
-        Dim strCuenta2 = JsonConvert.SerializeObject(ObjParam)
+        Dim strCuenta = JsonConvert.SerializeObject(Obj)
 
         Dim requestApi = CType(WebRequest.Create(url), HttpWebRequest)
         requestApi.Method = "POST"
@@ -367,31 +361,6 @@ Public Class WebForm1
 
     End Function
 
-    Public Function postXMLData(ByVal destinationUrl As String, ByVal requestXml As String) As String
-
-        ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
-
-        Dim request As HttpWebRequest = CType(WebRequest.Create(destinationUrl), HttpWebRequest)
-        Dim bytes As Byte()
-        bytes = System.Text.Encoding.ASCII.GetBytes(requestXml)
-        request.ContentType = "application/xml"
-        request.Accept = "application/xml"
-        request.ContentLength = bytes.Length
-        request.Method = "POST"
-        Dim requestStream As Stream = request.GetRequestStream()
-        requestStream.Write(bytes, 0, bytes.Length)
-        requestStream.Close()
-        Dim response As HttpWebResponse
-        response = CType(request.GetResponse(), HttpWebResponse)
-
-        If response.StatusCode = HttpStatusCode.OK Then
-            Dim responseStream As Stream = response.GetResponseStream()
-            Dim responseStr As String = New StreamReader(responseStream).ReadToEnd()
-            Return responseStr
-        End If
-
-        Return Nothing
-    End Function
 
     Public Function GetRequestApi(ByVal url As String) As String
 
