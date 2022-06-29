@@ -11,101 +11,22 @@ Public Class WebForm1
 
     Protected Sub btnPrueba_Click(sender As Object, e As EventArgs)
 
-        'Api post Body
 
-        'Dim urlApis As String = "http://localhost:9095/api/CuentaCorrentista"
-        'Dim requestApi = CType(WebRequest.Create(urlApis), HttpWebRequest)
-        'Dim Obj = New Dictionary(Of String, Object) From {
-        '    {"name", "prueba"},
-        '    {"email", "prubea@gmail.com"},
-        '    {"phone", "484848"},
-        '    {"adress", "Ciudad"},
-        '    {"country", 1}
-        '}
-
-
-        'Dim strCuenta = JsonConvert.SerializeObject(Obj)
-        'requestApi.Method = "POST"
-        'requestApi.ContentType = "application/json"
-        'requestApi.Accept = "application/json"
-
-
-        'Using streamWriterCuenta = New StreamWriter(requestApi.GetRequestStream())
-        '    streamWriterCuenta.Write(strCuenta)
-        '    streamWriterCuenta.Flush()
-        '    streamWriterCuenta.Close()
-        'End Using
-
-        'Try
-        '    Using responseCuenta As WebResponse = requestApi.GetResponse()
-        '        Using strReaderCuenta As Stream = responseCuenta.GetResponseStream()
-        '            If strReaderCuenta Is Nothing Then Return
-
-        '            Using objReaderCuenta As StreamReader = New StreamReader(strReaderCuenta)
-        '                Dim response As String = objReaderCuenta.ReadToEnd()
-        '                MsgBox(response)
-        '            End Using
-        '        End Using
-        '    End Using
-
-        'Catch ex As Exception
-        '    MsgBox("Can't load Web api" & vbCrLf & ex.Message)
-        'End Try
-
-
-
-
-        Dim urlDocuemnto = "http://localhost:9096/api/DocumentoXml/2/6c27ff05-5baf-47e5-8a1c-2f67b5fde270/sa"
-        Dim urlCredenciales = "http://localhost:9096/api/Credenciales/2/3/1/sa"
-
-        'Get documento
-        Dim documentos = RequestApi(urlDocuemnto)
-        Dim listDocumento = JsonConvert.DeserializeObject(documentos)
-
-        'Documento que se va a usar
-        Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
-
-        Dim xml = "<?xml version='1.0' encoding='UTF-8'?>
-                     <SolicitaTokenRequest>
-                    <usuario>83466371</usuario>
-                    <apikey>WEl3Zdf9qbKc8mulE0SRK5j</apikey>
-                    </SolicitaTokenRequest>"
-
-        Dim xmlBody = "<?xml version=" & Chr(34) & "1.0" & Chr(34) & " encoding=" & Chr(34) & "UTF-8" & Chr(34) & "?> 
-<FirmaDocumentoRequest id=" & Chr(34) & "EAFAC23F-C30C-4F98-A953-09415A9B9947" & Chr(34) & ">
-<xml_dte><![CDATA[{body}]]> 
-</xml_dte>
-</FirmaDocumentoRequest>"
-        xmlBody = xmlBody.Replace("{body}", documento.xml_Contenido)
-
-
-        Dim url = "https://dev2.api.ifacere-fel.com/api/solicitarToken"
-
-        Dim urlFirma = "https://dev.api.soluciones-mega.com/api/solicitaFirma"
-
-        Dim urlUnificado = "http://localhost:9096/api/MegaPrint/Certifica"
-
-        Dim token = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcGVuaWQiXSwiZXhwIjoxNjYzODUyNjA2LCJhdXRob3JpdGllcyI6WyJST0xFX0VNSVNPUiJdLCJqdGkiOiI4YTk0NWE1OS0yMWY3LTQ3OGEtYjA0Zi1iMDljZDk4NWUwMjkiLCJjbGllbnRfaWQiOiI4MzQ2NjM3MSJ9.LlGcIoysSQjrjVRQ4CdnbgKEGn8xlAbLQek1f4_dHyre-ifPGp9MOS32DhAlhdGAzcptllprZyi-MdeLmHAyFnFEhGXPGqCe9Ku-sJsmDLzlfYzK0FTLt9b4bkoz93cOHqOp6j-Kr3LMpd4Un3NO_3APhsfOlqZKL24uwSrHl7TAqWGYHXGsiX8uPqkcY4y537OKgY_kbzNSUQ4s6Co_JXZv2lixQh-1VVUMSSKCLA89cOJu2D4H3t1CE-wBlIxGRhWfegoyTstznM-zmjMFHE1SvtYqiZU-4ZkZn-6WPiSn0HYehKkOZdphcL8I6dICGU6mg5psuoTcH8UAqpUyUg"
-
-        Dim urlParametro = "http://localhost:9096/api/ParametroCatalogo/2/ds"
-
-
-        'Catalogo parametros
-        Dim parametros = RequestApi(urlParametro)
-        Dim listParametros = JsonConvert.DeserializeObject(parametros)
-        Dim parametro = JsonConvert.DeserializeObject(Of CatalogoParametrosModel)(listParametros(0).ToString())
-        Dim param = parametro.plantilla
 
         'Dim res = postXMLData(url, xml)
         'Dim res = postXMLDataAuth(urlFirma, xmlBody)
         'Dim res = postJsonBody(token, urlUnificado, documento.xml_Contenido, param)
 
-        Dim res = getDataApis(token)
+        Dim res = getDataApis()
         MsgBox(res)
 
     End Sub
 
-    Public Function getDataApis(ByVal token)
+    Public Function getDataApis()
+
+
+        Dim token As String = ""
+        Dim certificador = 3
 
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
 
@@ -114,14 +35,31 @@ Public Class WebForm1
         Dim urlParametro = "http://localhost:9096/api/ParametroCatalogo/2/ds"
 
         'Catalogo apis
-        Dim apis = RequestApi(urlApis)
+        Dim apis = GetRequestApi(urlApis)
         Dim listApis = JsonConvert.DeserializeObject(apis)
 
         'Api que se va a usar
         Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(1).ToString())
 
+        'Verificar si es necesario token 
+        If api.req_Autorizacion Then
+            'Solicitar token
+            'certificador/empresa/user
+            Dim urlToken = "http://localhost:9096/api/Tokens/3/1/sa"
+            Dim responseToken = GetRequestApi(urlToken)
+            Dim tokenObj = JsonConvert.DeserializeObject(Of ResponseApiModel)(responseToken)
+
+            If tokenObj.response.Length > 7 Then
+                'Token obtenido 
+                token = tokenObj.response
+            Else
+                'No se obtubo un token
+            End If
+
+        End If
+
         'Catalogo parametros
-        Dim parametros = RequestApi(urlParametro)
+        Dim parametros = GetRequestApi(urlParametro)
         Dim listParametros = JsonConvert.DeserializeObject(parametros)
 
         Dim urlApi = api.url_Api
@@ -154,8 +92,6 @@ Public Class WebForm1
             'Param Body
             If parametro.tipo_Parametro = 2 Then
                 'Replace values in param 
-
-
 
                 'Config ContentType 5 Json 6 xml 
                 If parametro.tipo_Dato = 6 Then
@@ -216,14 +152,14 @@ Public Class WebForm1
         Dim urlCredenciales = "http://localhost:9096/api/Credenciales/2/3/1/sa"
 
         'Get documento
-        Dim documentos = RequestApi(urlDocuemnto)
+        Dim documentos = GetRequestApi(urlDocuemnto)
         Dim listDocumento = JsonConvert.DeserializeObject(documentos)
 
         'Documento que se va a usar
         Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
 
         'Get params values (credenciales)
-        Dim credenciales = RequestApi(urlCredenciales)
+        Dim credenciales = GetRequestApi(urlCredenciales)
         Dim listCredenciales = JsonConvert.DeserializeObject(credenciales)
 
         Dim ObjParam = New Dictionary(Of String, Object)
@@ -261,14 +197,14 @@ Public Class WebForm1
         Dim urlCredenciales = "http://localhost:9096/api/Credenciales/2/3/1/sa"
 
         'Get documento
-        Dim documentos = RequestApi(urlDocuemnto)
+        Dim documentos = GetRequestApi(urlDocuemnto)
         Dim listDocumento = JsonConvert.DeserializeObject(documentos)
 
         'Documento que se va a usar
         Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
 
         'Get params values (credenciales)
-        Dim credenciales = RequestApi(urlCredenciales)
+        Dim credenciales = GetRequestApi(urlCredenciales)
         Dim listCredenciales = JsonConvert.DeserializeObject(credenciales)
 
 
@@ -416,7 +352,7 @@ Public Class WebForm1
         Return Nothing
     End Function
 
-    Public Function RequestApi(ByVal url As String) As String
+    Public Function GetRequestApi(ByVal url As String) As String
 
         Dim requestApiUrl = CType(WebRequest.Create(url), HttpWebRequest)
 
