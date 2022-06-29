@@ -65,19 +65,8 @@ Public Class WebForm1
         Dim urlApi = api.url_Api
 
         'Buscar parametros en url 
-        If listParametros.Count <> 0 Then
+        urlApi = replaceValues(urlApi, token)
 
-            For Each i In listParametros
-
-                Dim parametro = JsonConvert.DeserializeObject(Of CatalogoParametrosModel)(i.ToString())
-
-                If parametro.tipo_Parametro = 1 Then
-                    'Header url
-                    'Replace params to value
-                End If
-
-            Next i
-        End If
 
 
         'Configurar api
@@ -98,7 +87,7 @@ Public Class WebForm1
                     'ContentType
                     request.ContentType = "application/xml"
 
-                    Dim paramValueXml = replaceValuesXml(parametro.plantilla, token)
+                    Dim paramValueXml = replaceValues(parametro.plantilla, token)
 
                     'Add param to body api
                     Dim bytes As Byte()
@@ -126,6 +115,56 @@ Public Class WebForm1
                 Exit For
             End If
         Next
+
+        'Credenciales y docuemnto
+        Dim urlDocuemnto = "http://localhost:9096/api/DocumentoXml/2/6c27ff05-5baf-47e5-8a1c-2f67b5fde270/sa"
+        Dim urlCredenciales = "http://localhost:9096/api/Credenciales/2/3/1/sa"
+
+        'Get documento
+        Dim documentos = GetRequestApi(urlDocuemnto)
+        Dim listDocumento = JsonConvert.DeserializeObject(documentos)
+
+        'Documento que se va a usar
+        Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
+
+        'Get params values (credenciales)
+        Dim credenciales = GetRequestApi(urlCredenciales)
+        Dim listCredenciales = JsonConvert.DeserializeObject(credenciales)
+
+
+
+        'Verificar headers
+
+
+
+        If listParametros.Count <> 0 Then
+
+            For Each i In listParametros
+
+                Dim parametro = JsonConvert.DeserializeObject(Of CatalogoParametrosModel)(i.ToString())
+
+                If parametro.tipo_Parametro = 3 Then
+                    'Header 
+                    'Replace params to value and add headers
+                    For Each ii In listCredenciales
+
+                        Dim credencial = JsonConvert.DeserializeObject(Of CredencialModel)(ii.ToString())
+                        If credencial.campo_Nombre = parametro.descripcion And parametro.descripcion <> "Authorization" Then
+
+                            request.Headers.Add(credencial.campo_Nombre, credencial.campo_Valor)
+
+                        End If
+
+                    Next ii
+
+                    If parametro.descripcion = "Authorization" Then
+                        request.Headers.Add("Authorization", token)
+
+                    End If
+                End If
+
+            Next i
+        End If
 
         'Use api 
         Try
@@ -189,7 +228,9 @@ Public Class WebForm1
         Return JsonConvert.SerializeObject(ObjParam)
     End Function
 
-    Public Function replaceValuesXml(ByVal param As String, ByVal token As String) As String
+
+
+    Public Function replaceValues(ByVal param As String, ByVal token As String) As String
 
 
 
