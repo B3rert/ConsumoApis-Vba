@@ -1,5 +1,7 @@
 ﻿Imports System.IO
 Imports System.Net
+Imports System.Xml
+Imports System.Xml.Serialization
 Imports Newtonsoft.Json
 
 Public Class WebForm1
@@ -11,18 +13,11 @@ Public Class WebForm1
 
     Protected Sub btnPrueba_Click(sender As Object, e As EventArgs)
 
-
-
         'Dim res = postXMLData(url, xml)
         'Dim res = postXMLDataAuth(urlFirma, xmlBody)
         'Dim res = postJsonBody(token, urlUnificado, documento.xml_Contenido, param)
 
         Dim res = getDataApis()
-
-        'Update doc
-
-
-
         MsgBox(res)
 
     End Sub
@@ -37,14 +32,14 @@ Public Class WebForm1
 
         'Url pruebas
         Dim urlApis = "http://localhost:9096/api/ApiCatalogo/4/155/ds"
-        Dim urlParametro = "http://localhost:9096/api/ParametroCatalogo/3/ds"
+        Dim urlParametro = "http://localhost:9096/api/ParametroCatalogo/2/ds"
 
         'Catalogo apis
         Dim apis = GetRequestApi(urlApis)
         Dim listApis = JsonConvert.DeserializeObject(apis)
 
         'Api que se va a usar
-        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(2).ToString())
+        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(1).ToString())
 
         'Verificar si es necesario token 
         If api.req_Autorizacion Then
@@ -184,6 +179,11 @@ Public Class WebForm1
 
                     Using streamReaderApi As StreamReader = New StreamReader(streamApi)
                         Dim response As String = streamReaderApi.ReadToEnd()
+
+                        'Dim xml As XmlDocument = New XmlDocument()
+                        'xml.LoadXml(response)
+                        'Dim xmlNode As XmlNode = xml.SelectSingleNode("/FirmaDocumentoResponse/xml_dte")
+
 
                         Dim responseUpdate = updateDocDatabase(response, documento.d_Id_Unc)
 

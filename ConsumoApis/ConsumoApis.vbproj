@@ -119,6 +119,7 @@
     <Compile Include="Models\CatalogoParametrosModel.vb" />
     <Compile Include="Models\CredencialModel.vb" />
     <Compile Include="Models\DocumentoXmlModel.vb" />
+    <Compile Include="Models\GTDocumento.vb" />
     <Compile Include="Models\ResponseApiModel.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
