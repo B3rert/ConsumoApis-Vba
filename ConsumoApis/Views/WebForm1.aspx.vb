@@ -27,25 +27,28 @@ Public Class WebForm1
 
         Dim token As String = ""
         Dim certificador = 3
+        Dim apiUse = 4
+        'Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
+        Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
 
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
 
         'Url pruebas
         Dim urlApis = "http://localhost:9096/api/ApiCatalogo/4/155/ds"
-        Dim urlParametro = "http://localhost:9096/api/ParametroCatalogo/2/ds"
+        Dim urlParametro = $"http://localhost:9096/api/ParametroCatalogo/{apiUse}/ds"
 
         'Catalogo apis
         Dim apis = GetRequestApi(urlApis)
         Dim listApis = JsonConvert.DeserializeObject(apis)
 
         'Api que se va a usar
-        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(1).ToString())
+        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(3).ToString())
 
         'Verificar si es necesario token 
         If api.req_Autorizacion Then
             'Solicitar token
             'certificador/empresa/user
-            Dim urlToken = "http://localhost:9096/api/Tokens/3/1/sa"
+            Dim urlToken = $"http://localhost:9096/api/Tokens/{certificador}/1/sa"
             Dim responseToken = GetRequestApi(urlToken)
             Dim tokenObj = JsonConvert.DeserializeObject(Of ResponseApiModel)(responseToken)
 
@@ -65,7 +68,7 @@ Public Class WebForm1
         Dim urlApi = api.url_Api
 
         'Buscar parametros en url 
-        urlApi = replaceValues(urlApi, token)
+        urlApi = replaceValues(urlApi, token, certificador, uuidDoc)
 
 
 
@@ -75,8 +78,8 @@ Public Class WebForm1
         request.Accept = "*/*"
         'request.Headers.Add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcGVuaWQiXSwiZXhwIjoxNjY0Mzg1MjYwLCJhdXRob3JpdGllcyI6WyJST0xFX0VNSVNPUiJdLCJqdGkiOiJlMjFkNGIyMS1lYWZkLTQzMDctOWNjMC05NzQ0NzIyMzk1MzIiLCJjbGllbnRfaWQiOiI4MzQ2NjM3MSJ9.3D26kQWXbDz3qIqSXwzl3uIJnHVE-ojpRaprlaOrHbhLKOOiB12jTx0rAPD6tixVuxPTkeg_b5EcsYVx5fDq2ezsFi3bCcg0tr2-qMK3M2Tz4g9k63jtCwmiW4O32EWzVykTZQnghg7sZ4EzTBCSbANfqFI0UYX2CGH-4RRd-N_IbveiapPXemQvYSWTCHu3j3fBZM6upHPSLawqLSLu_fqf1r0IgHu8yF4YeWsXE18PzpMDMmjEZkXOtr7gp_Wt_35ZDCPSByIDmNTJUFn8PoysNZFpbU4NOmIzsNuExCc8h20gmceOa5BYJb4X0krd-4HNvOg2OGhnDqkYddx9zg")
         'Credenciales y docuemnto
-        Dim urlDocuemnto = "http://localhost:9096/api/DocumentoXml/2/6c27ff05-5baf-47e5-8a1c-2f67b5fde270/sa"
-        Dim urlCredenciales = "http://localhost:9096/api/Credenciales/2/3/1/sa"
+        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
+        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
 
         'Get documento
         Dim documentos = GetRequestApi(urlDocuemnto)
@@ -135,7 +138,7 @@ Public Class WebForm1
                     'ContentType
                     request.ContentType = "application/xml"
 
-                    Dim paramValueXml = replaceValues(parametro.plantilla, token)
+                    Dim paramValueXml = replaceValues(parametro.plantilla, token, certificador, uuidDoc)
 
                     'Dim pruebaRes = postXMLDataAuth(urlApi, paramValueXml)
 
@@ -154,7 +157,7 @@ Public Class WebForm1
                 Else
                     'ContentType
                     request.ContentType = "application/json"
-                    Dim paramValueJson = replaceValuesJson(parametro.plantilla, token)
+                    Dim paramValueJson = replaceValuesJson(parametro.plantilla, token, certificador, uuidDoc)
 
                     'Add param to body api
                     Using streamWriterJson = New StreamWriter(request.GetRequestStream())
@@ -180,14 +183,27 @@ Public Class WebForm1
                     Using streamReaderApi As StreamReader = New StreamReader(streamApi)
                         Dim response As String = streamReaderApi.ReadToEnd()
 
-                        'Dim xml As XmlDocument = New XmlDocument()
-                        'xml.LoadXml(response)
-                        'Dim xmlNode As XmlNode = xml.SelectSingleNode("/FirmaDocumentoResponse/xml_dte")
+
+                        If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
+                            Dim responseUpdate = updateDocDatabase(response, documento.d_Id_Unc)
+
+                            Return responseUpdate
+
+                        Else
+
+                            Dim xml As XmlDocument = New XmlDocument()
+                            xml.LoadXml(response)
+                            Dim xmlNode As XmlNode = xml.SelectSingleNode(api.nodo_FirmaDocumentoResponse)
+
+                            Dim responseUpdate = updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
+
+                            Return responseUpdate
+                        End If
 
 
-                        Dim responseUpdate = updateDocDatabase(response, documento.d_Id_Unc)
 
-                        Return responseUpdate
+
+
 
                     End Using
                 End Using
@@ -200,9 +216,9 @@ Public Class WebForm1
 
     End Function
 
-    Public Function replaceValuesJson(ByVal param As String, ByVal token As String)
-        Dim urlDocuemnto = "http://localhost:9096/api/DocumentoXml/2/6c27ff05-5baf-47e5-8a1c-2f67b5fde270/sa"
-        Dim urlCredenciales = "http://localhost:9096/api/Credenciales/2/3/1/sa"
+    Public Function replaceValuesJson(ByVal param As String, ByVal token As String, ByVal certificador As Integer, ByVal uuidDoc As String)
+        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
+        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
 
         'Get documento
         Dim documentos = GetRequestApi(urlDocuemnto)
@@ -232,7 +248,7 @@ Public Class WebForm1
 
             subs2(1) = subs2(1).Replace("{token}", token)
             subs2(1) = subs2(1).Replace("{xml_Contenido}", documento.xml_Contenido)
-            subs2(1) = subs2(1).Replace("{d_Id_Unc}", "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270")
+            subs2(1) = subs2(1).Replace("{d_Id_Unc}", documento.d_Id_Unc.ToUpper())
 
             ObjParam.Add(subs2(0), subs2(1))
         Next i
@@ -244,12 +260,12 @@ Public Class WebForm1
 
 
 
-    Public Function replaceValues(ByVal param As String, ByVal token As String) As String
+    Public Function replaceValues(ByVal param As String, ByVal token As String, ByVal certificador As Integer, ByVal uuidDoc As String) As String
 
 
 
-        Dim urlDocuemnto = "http://localhost:9096/api/DocumentoXml/2/6c27ff05-5baf-47e5-8a1c-2f67b5fde270/sa"
-        Dim urlCredenciales = "http://localhost:9096/api/Credenciales/2/3/1/sa"
+        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
+        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
 
         'Get documento
         Dim documentos = GetRequestApi(urlDocuemnto)
@@ -328,46 +344,6 @@ Public Class WebForm1
 
     End Function
 
-
-
-
-    Public Function postXMLDataAuth(ByVal destinationUrl As String, ByVal requestXml As String) As String
-
-        ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
-
-        Dim request = CType(WebRequest.Create(destinationUrl), HttpWebRequest)
-
-        request.ContentType = "application/xml"
-        request.Accept = "*/*"
-        request.Method = "POST"
-
-        request.Headers.Add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcGVuaWQiXSwiZXhwIjoxNjY0Mzg1MjYwLCJhdXRob3JpdGllcyI6WyJST0xFX0VNSVNPUiJdLCJqdGkiOiJlMjFkNGIyMS1lYWZkLTQzMDctOWNjMC05NzQ0NzIyMzk1MzIiLCJjbGllbnRfaWQiOiI4MzQ2NjM3MSJ9.3D26kQWXbDz3qIqSXwzl3uIJnHVE-ojpRaprlaOrHbhLKOOiB12jTx0rAPD6tixVuxPTkeg_b5EcsYVx5fDq2ezsFi3bCcg0tr2-qMK3M2Tz4g9k63jtCwmiW4O32EWzVykTZQnghg7sZ4EzTBCSbANfqFI0UYX2CGH-4RRd-N_IbveiapPXemQvYSWTCHu3j3fBZM6upHPSLawqLSLu_fqf1r0IgHu8yF4YeWsXE18PzpMDMmjEZkXOtr7gp_Wt_35ZDCPSByIDmNTJUFn8PoysNZFpbU4NOmIzsNuExCc8h20gmceOa5BYJb4X0krd-4HNvOg2OGhnDqkYddx9zg")
-
-        Dim bytes As Byte()
-        bytes = Encoding.ASCII.GetBytes(requestXml)
-        request.ContentLength = bytes.Length
-
-        Dim requestStream As Stream = request.GetRequestStream()
-        requestStream.Write(bytes, 0, bytes.Length)
-        requestStream.Close()
-
-        Try
-            Using response As WebResponse = request.GetResponse()
-                Using responseStream As Stream = response.GetResponseStream()
-                    If responseStream Is Nothing Then Return ""
-
-                    Using objReaderCuenta As StreamReader = New StreamReader(responseStream)
-                        Dim strResponse As String = objReaderCuenta.ReadToEnd()
-                        Return strResponse
-                    End Using
-                End Using
-            End Using
-
-        Catch ex As WebException
-            Return "Can't load Web api" & vbCrLf & ex.Message
-        End Try
-
-    End Function
 
 
     Public Function GetRequestApi(ByVal url As String) As String

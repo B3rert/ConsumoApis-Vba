@@ -14,4 +14,5 @@
     Public Property nom_Tipo_Respuesta As String
     Public Property nom_Certificador As String
     Public Property nom_Tipo_Servicio As String
+    Public Property nodo_FirmaDocumentoResponse As String
 End Class
