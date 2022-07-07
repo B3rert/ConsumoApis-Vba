@@ -13,10 +13,6 @@ Public Class WebForm1
 
     Protected Sub btnPrueba_Click(sender As Object, e As EventArgs)
 
-        'Dim res = postXMLData(url, xml)
-        'Dim res = postXMLDataAuth(urlFirma, xmlBody)
-        'Dim res = postJsonBody(token, urlUnificado, documento.xml_Contenido, param)
-
         Dim res = getDataApis()
         MsgBox(res)
 
