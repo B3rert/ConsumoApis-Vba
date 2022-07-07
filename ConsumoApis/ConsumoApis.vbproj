@@ -13,7 +13,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>ConsumoApis</RootNamespace>
     <AssemblyName>ConsumoApis</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <MyType>Custom</MyType>
     <UseIISExpress>true</UseIISExpress>
     <Use64BitIISExpress />

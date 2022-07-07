@@ -1,8 +1,11 @@
 ﻿Imports System.IO
 Imports System.Net
+Imports System.Threading.Tasks
 Imports System.Xml
 Imports System.Xml.Serialization
 Imports Newtonsoft.Json
+Imports System.Net.Http
+Imports System.Net.Http.Headers
 
 Public Class WebForm1
     Inherits System.Web.UI.Page
@@ -14,11 +17,12 @@ Public Class WebForm1
     Protected Sub btnPrueba_Click(sender As Object, e As EventArgs)
 
         Dim res = getDataApis()
-        MsgBox(res)
+        MsgBox(res.Result)
+
 
     End Sub
 
-    Public Function getDataApis()
+    Public Async Function getDataApis() As Task(Of String)
 
 
         Dim token As String = ""
@@ -32,21 +36,51 @@ Public Class WebForm1
         'Url pruebas
         Dim urlApis = "http://localhost:9096/api/ApiCatalogo/4/155/ds"
         Dim urlParametro = $"http://localhost:9096/api/ParametroCatalogo/{apiUse}/ds"
+        'Credenciales y docuemnto
+        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
+        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
 
         'Catalogo apis
-        Dim apis = GetRequestApi(urlApis)
-        Dim listApis = JsonConvert.DeserializeObject(apis)
+        Dim apis = Await GetRequestApi(urlApis)
+
+        If apis.statusCode <> 200 Then
+            Return apis.response
+        End If
+
+        Dim listApis = JsonConvert.DeserializeObject(apis.response)
 
         'Api que se va a usar
         Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(3).ToString())
+
+
+        'Get documento
+        Dim documentos = Await GetRequestApi(urlDocuemnto)
+        If documentos.statusCode <> 200 Then
+            Return documentos.response
+        End If
+        Dim listDocumento = JsonConvert.DeserializeObject(documentos.response)
+
+        'Documento que se va a usar
+        Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
+
+        'Get params values (credenciales)
+        Dim credenciales = Await GetRequestApi(urlCredenciales)
+        If credenciales.statusCode <> 200 Then
+            Return credenciales.response
+        End If
+        Dim listCredenciales = JsonConvert.DeserializeObject(credenciales.response)
+
 
         'Verificar si es necesario token 
         If api.req_Autorizacion Then
             'Solicitar token
             'certificador/empresa/user
             Dim urlToken = $"http://localhost:9096/api/Tokens/{certificador}/1/sa"
-            Dim responseToken = GetRequestApi(urlToken)
-            Dim tokenObj = JsonConvert.DeserializeObject(Of ResponseApiModel)(responseToken)
+            Dim responseToken = Await GetRequestApi(urlToken)
+            If responseToken.statusCode <> 200 Then
+                Return responseToken.response
+            End If
+            Dim tokenObj = JsonConvert.DeserializeObject(Of ResponseApiModel)(responseToken.response)
 
             If tokenObj.response.Length > 7 Then
                 'Token obtenido 
@@ -58,14 +92,16 @@ Public Class WebForm1
         End If
 
         'Catalogo parametros
-        Dim parametros = GetRequestApi(urlParametro)
-        Dim listParametros = JsonConvert.DeserializeObject(parametros)
+        Dim parametros = Await GetRequestApi(urlParametro)
+        If parametros.statusCode <> 200 Then
+            Return parametros.response
+        End If
+        Dim listParametros = JsonConvert.DeserializeObject(parametros.response)
 
         Dim urlApi = api.url_Api
 
         'Buscar parametros en url 
-        urlApi = replaceValues(urlApi, token, certificador, uuidDoc)
-
+        urlApi = replaceValues(urlApi, token, documento, listCredenciales)
 
 
         'Configurar api
@@ -73,20 +109,7 @@ Public Class WebForm1
         request.Method = api.nom_Tipo_Metodo
         request.Accept = "*/*"
         'request.Headers.Add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcGVuaWQiXSwiZXhwIjoxNjY0Mzg1MjYwLCJhdXRob3JpdGllcyI6WyJST0xFX0VNSVNPUiJdLCJqdGkiOiJlMjFkNGIyMS1lYWZkLTQzMDctOWNjMC05NzQ0NzIyMzk1MzIiLCJjbGllbnRfaWQiOiI4MzQ2NjM3MSJ9.3D26kQWXbDz3qIqSXwzl3uIJnHVE-ojpRaprlaOrHbhLKOOiB12jTx0rAPD6tixVuxPTkeg_b5EcsYVx5fDq2ezsFi3bCcg0tr2-qMK3M2Tz4g9k63jtCwmiW4O32EWzVykTZQnghg7sZ4EzTBCSbANfqFI0UYX2CGH-4RRd-N_IbveiapPXemQvYSWTCHu3j3fBZM6upHPSLawqLSLu_fqf1r0IgHu8yF4YeWsXE18PzpMDMmjEZkXOtr7gp_Wt_35ZDCPSByIDmNTJUFn8PoysNZFpbU4NOmIzsNuExCc8h20gmceOa5BYJb4X0krd-4HNvOg2OGhnDqkYddx9zg")
-        'Credenciales y docuemnto
-        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
-        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
 
-        'Get documento
-        Dim documentos = GetRequestApi(urlDocuemnto)
-        Dim listDocumento = JsonConvert.DeserializeObject(documentos)
-
-        'Documento que se va a usar
-        Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
-
-        'Get params values (credenciales)
-        Dim credenciales = GetRequestApi(urlCredenciales)
-        Dim listCredenciales = JsonConvert.DeserializeObject(credenciales)
 
 
 
@@ -134,7 +157,7 @@ Public Class WebForm1
                     'ContentType
                     request.ContentType = "application/xml"
 
-                    Dim paramValueXml = replaceValues(parametro.plantilla, token, certificador, uuidDoc)
+                    Dim paramValueXml = replaceValues(parametro.plantilla, token, documento, listCredenciales)
 
                     'Dim pruebaRes = postXMLDataAuth(urlApi, paramValueXml)
 
@@ -153,7 +176,7 @@ Public Class WebForm1
                 Else
                     'ContentType
                     request.ContentType = "application/json"
-                    Dim paramValueJson = replaceValuesJson(parametro.plantilla, token, certificador, uuidDoc)
+                    Dim paramValueJson = replaceValuesJson(parametro.plantilla, token, documento, listCredenciales)
 
                     'Add param to body api
                     Using streamWriterJson = New StreamWriter(request.GetRequestStream())
@@ -181,9 +204,9 @@ Public Class WebForm1
 
 
                         If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
-                            Dim responseUpdate = updateDocDatabase(response, documento.d_Id_Unc)
+                            Dim responseUpdate = Await updateDocDatabase(response, documento.d_Id_Unc)
 
-                            Return responseUpdate
+                            Return responseUpdate.response
 
                         Else
 
@@ -191,15 +214,10 @@ Public Class WebForm1
                             xml.LoadXml(response)
                             Dim xmlNode As XmlNode = xml.SelectSingleNode(api.nodo_FirmaDocumentoResponse)
 
-                            Dim responseUpdate = updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
+                            Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
 
-                            Return responseUpdate
+                            Return responseUpdate.response
                         End If
-
-
-
-
-
 
                     End Using
                 End Using
@@ -212,20 +230,7 @@ Public Class WebForm1
 
     End Function
 
-    Public Function replaceValuesJson(ByVal param As String, ByVal token As String, ByVal certificador As Integer, ByVal uuidDoc As String)
-        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
-        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
-
-        'Get documento
-        Dim documentos = GetRequestApi(urlDocuemnto)
-        Dim listDocumento = JsonConvert.DeserializeObject(documentos)
-
-        'Documento que se va a usar
-        Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
-
-        'Get params values (credenciales)
-        Dim credenciales = GetRequestApi(urlCredenciales)
-        Dim listCredenciales = JsonConvert.DeserializeObject(credenciales)
+    Public Function replaceValuesJson(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object)
 
         Dim ObjParam = New Dictionary(Of String, Object)
 
@@ -249,33 +254,12 @@ Public Class WebForm1
             ObjParam.Add(subs2(0), subs2(1))
         Next i
 
-
-
         Return JsonConvert.SerializeObject(ObjParam)
     End Function
 
 
+    Public Function replaceValues(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object) As String
 
-    Public Function replaceValues(ByVal param As String, ByVal token As String, ByVal certificador As Integer, ByVal uuidDoc As String) As String
-
-
-
-        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
-        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
-
-        'Get documento
-        Dim documentos = GetRequestApi(urlDocuemnto)
-        Dim listDocumento = JsonConvert.DeserializeObject(documentos)
-
-        'Documento que se va a usar
-        Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
-
-        'Get params values (credenciales)
-        Dim credenciales = GetRequestApi(urlCredenciales)
-        Dim listCredenciales = JsonConvert.DeserializeObject(credenciales)
-
-
-        'xmlBody = xmlBody.Replace("{body}", dte)
 
         'search params and replace with value
         For Each i In listCredenciales
@@ -298,8 +282,7 @@ Public Class WebForm1
     End Function
 
 
-    Public Function updateDocDatabase(ByVal doc, ByVal uuid) As String
-
+    Private Async Function updateDocDatabase(ByVal doc, ByVal uuid) As Task(Of ResponseApiModel)
 
         Dim url = "http://localhost:9096/api/DocumentoXml"
         Dim Obj = New Dictionary(Of String, Object) From {
@@ -310,63 +293,78 @@ Public Class WebForm1
 
         Dim strCuenta = JsonConvert.SerializeObject(Obj)
 
-        Dim requestApi = CType(WebRequest.Create(url), HttpWebRequest)
-        requestApi.Method = "POST"
-        requestApi.ContentType = "application/json"
-        requestApi.Accept = "*/*"
-
-
-        Using streamWriterCuenta = New StreamWriter(requestApi.GetRequestStream())
-            streamWriterCuenta.Write(strCuenta)
-            streamWriterCuenta.Flush()
-            streamWriterCuenta.Close()
-        End Using
-
         Try
-            Using responseCuenta As WebResponse = requestApi.GetResponse()
-                Using strReaderCuenta As Stream = responseCuenta.GetResponseStream()
-                    If strReaderCuenta Is Nothing Then Return ""
+            Dim client = New HttpClient()
+            Dim builder As UriBuilder = New UriBuilder(url)
+            Dim content = New StringContent(strCuenta, Encoding.UTF8, "application/json")
+            Dim response = Await client.PostAsync(builder.Uri, content)
+            Dim result = Await response.Content.ReadAsStringAsync()
 
-                    Using objReaderCuenta As StreamReader = New StreamReader(strReaderCuenta)
-                        Dim response As String = objReaderCuenta.ReadToEnd()
-                        Return response
-                    End Using
-                End Using
-            End Using
+            If Not response.IsSuccessStatusCode Then
+                Dim message = result
+                Return New ResponseApiModel() With {
+                .statusCode = CInt(response.StatusCode),
+                .response = message
+            }
+            End If
 
+            Return New ResponseApiModel() With {
+            .statusCode = 200,
+            .response = result
+        }
         Catch ex As Exception
-            Return "Can't load Web api" & vbCrLf & ex.Message
-        End Try
+            Dim msgError As String
 
+            Select Case ex.Message
+                Case "No such host is known"
+                    msgError = "No se encontro el servidor"
+                Case Else
+                    msgError = ex.Message
+            End Select
+
+            Return New ResponseApiModel() With {
+            .statusCode = 500,
+            .response = msgError
+        }
+        End Try
     End Function
 
 
-
-    Public Function GetRequestApi(ByVal url As String) As String
-
-        Dim requestApiUrl = CType(WebRequest.Create(url), HttpWebRequest)
-
-        requestApiUrl.Method = "GET"
-        requestApiUrl.ContentType = "*/*"
-        requestApiUrl.Accept = "*/*"
+    Private Async Function GetRequestApi(ByVal url As String) As Task(Of ResponseApiModel)
 
         Try
-            Using responseApi As WebResponse = requestApiUrl.GetResponse()
-                Using strReaderApi As Stream = responseApi.GetResponseStream()
-                    If strReaderApi Is Nothing Then Return ""
+            Dim client = New HttpClient()
+            Dim builder As UriBuilder = New UriBuilder(url)
+            Dim response = Await client.GetAsync(builder.Uri)
+            Dim result = Await response.Content.ReadAsStringAsync()
 
-                    Using objReaderApi As StreamReader = New StreamReader(strReaderApi)
-                        Dim response As String = objReaderApi.ReadToEnd()
-                        Return response
-                    End Using
-                End Using
-            End Using
+            If Not response.IsSuccessStatusCode Then
+                Dim message = result
+                Return New ResponseApiModel() With {
+                    .statusCode = CInt(response.StatusCode),
+                    .response = message
+                }
+            End If
 
+            Return New ResponseApiModel() With {
+                .statusCode = 200,
+                .response = result
+            }
         Catch ex As Exception
-            Return "Can't load Web api" & vbCrLf & ex.Message
+            Dim msgError As String
+
+            Select Case ex.Message
+                Case "No such host is known"
+                    msgError = "No se encontro el servidor"
+                Case Else
+                    msgError = ex.Message
+            End Select
+
+            Return New ResponseApiModel() With {
+                .statusCode = 500,
+                .response = msgError
+            }
         End Try
-
     End Function
-
 
 End Class
