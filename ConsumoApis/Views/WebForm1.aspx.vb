@@ -14,19 +14,27 @@ Public Class WebForm1
     Protected Sub btnPrueba_Click(sender As Object, e As EventArgs)
 
         Dim res = getDataApis()
-        MsgBox(res.Result)
+
+        If res.Result.Code <> 200 Then
+            'Error
+            MsgBox(res.Result.Message, vbCritical, $"{res.Result.Api} ({ res.Result.Code})")
+        Else
+            MsgBox(res.Result.Message, vbDefaultButton1, res.Result.Code)
+
+        End If
+
 
 
     End Sub
 
-    Private Async Function getDataApis() As Task(Of String)
+    Private Async Function getDataApis() As Task(Of ErrorModel)
 
         Dim usuario = "sa"
         Dim token As String = ""
         Dim certificador = 3
-        Dim apiUse = 4
-        'Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
-        Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
+        Dim apiUse = 2
+        Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
+        'Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
 
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
 
@@ -34,26 +42,34 @@ Public Class WebForm1
         Dim urlApis = $"http://localhost:9096/api/ApiCatalogo/4/155/{usuario}"
         Dim urlParametro = $"http://localhost:9096/api/ParametroCatalogo/{apiUse}/{usuario}"
         'Credenciales y docuemnto
-        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/{usuario}"
+        Dim urlDocumento = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/{usuario}"
         Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/{usuario}"
 
         'Catalogo apis
         Dim apis = Await GetRequestApi(urlApis)
 
         If apis.statusCode <> 200 Then
-            Return apis.response
+            Return New ErrorModel() With {
+                .Code = apis.statusCode,
+                .Api = urlApis,
+                .Message = apis.response
+            }
         End If
 
         Dim listApis = JsonConvert.DeserializeObject(apis.response)
 
         'Api que se va a usar
-        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(3).ToString())
+        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(1).ToString())
 
 
         'Get documento
-        Dim documentos = Await GetRequestApi(urlDocuemnto)
+        Dim documentos = Await GetRequestApi(urlDocumento)
         If documentos.statusCode <> 200 Then
-            Return documentos.response
+            Return New ErrorModel() With {
+                .Code = documentos.statusCode,
+                .Api = urlDocumento,
+                .Message = documentos.response
+            }
         End If
         Dim listDocumento = JsonConvert.DeserializeObject(documentos.response)
 
@@ -63,7 +79,11 @@ Public Class WebForm1
         'Get params values (credenciales)
         Dim credenciales = Await GetRequestApi(urlCredenciales)
         If credenciales.statusCode <> 200 Then
-            Return credenciales.response
+            Return New ErrorModel() With {
+                .Code = credenciales.statusCode,
+                .Api = urlCredenciales,
+                .Message = credenciales.response
+            }
         End If
         Dim listCredenciales = JsonConvert.DeserializeObject(credenciales.response)
 
@@ -75,7 +95,11 @@ Public Class WebForm1
             Dim urlToken = $"http://localhost:9096/api/Tokens/{certificador}/1/{usuario}"
             Dim responseToken = Await GetRequestApi(urlToken)
             If responseToken.statusCode <> 200 Then
-                Return responseToken.response
+                Return New ErrorModel() With {
+                .Code = responseToken.statusCode,
+                .Api = urlToken,
+                .Message = responseToken.response
+            }
             End If
             Dim tokenObj = JsonConvert.DeserializeObject(Of ResponseApiModel)(responseToken.response)
 
@@ -91,7 +115,11 @@ Public Class WebForm1
         'Catalogo parametros
         Dim parametros = Await GetRequestApi(urlParametro)
         If parametros.statusCode <> 200 Then
-            Return parametros.response
+            Return New ErrorModel() With {
+                .Code = parametros.statusCode,
+                .Api = urlParametro,
+                .Message = parametros.response
+            }
         End If
         Dim listParametros = JsonConvert.DeserializeObject(parametros.response)
 
@@ -197,19 +225,36 @@ Public Class WebForm1
                     response = Await client.DeleteAsync(builder.Uri)
 
                 Case Else
-                    Return "Solo se permiten los metodos POST, PUT, GET y DELETE"
+                    Return New ErrorModel() With {
+                .Code = 500,
+                .Api = "None",
+                .Message = "Solo se permiten los metodos POST, PUT, GET y DELETE"
+            }
             End Select
 
             Dim result = Await response.Content.ReadAsStringAsync()
 
             If Not response.IsSuccessStatusCode Then
-                Return result
+                Return New ErrorModel() With {
+              .Code = 500,
+              .Api = api.url_Api,
+              .Message = result}
             End If
 
             If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
                 Dim responseUpdate = Await updateDocDatabase(result, documento.d_Id_Unc)
 
-                Return responseUpdate.response
+                If responseUpdate.statusCode <> 200 Then
+                    Return New ErrorModel() With {
+              .Code = responseUpdate.statusCode,
+              .Api = "http://localhost:9096/api/DocumentoXml",
+              .Message = responseUpdate.response}
+                End If
+                Return New ErrorModel() With {
+             .Code = responseUpdate.statusCode,
+             .Api = "http://localhost:9096/api/DocumentoXml",
+             .Message = responseUpdate.response}
+
 
             Else
 
@@ -219,12 +264,27 @@ Public Class WebForm1
 
                 Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
 
-                Return responseUpdate.response
+
+                If responseUpdate.statusCode <> 200 Then
+                    Return New ErrorModel() With {
+              .Code = responseUpdate.statusCode,
+              .Api = "http://localhost:9096/api/DocumentoXml",
+              .Message = responseUpdate.response}
+                End If
+                Return New ErrorModel() With {
+             .Code = responseUpdate.statusCode,
+             .Api = "http://localhost:9096/api/DocumentoXml",
+             .Message = responseUpdate.response}
 
             End If
 
         Catch ex As Exception
-            Return ex.Message
+
+            Return New ErrorModel() With {
+             .Code = 500,
+             .Api = "None",
+             .Message = ex.Message}
+
         End Try
 
 
