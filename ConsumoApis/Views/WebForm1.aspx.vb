@@ -32,9 +32,9 @@ Public Class WebForm1
         Dim usuario = "sa"
         Dim token As String = ""
         Dim certificador = 3
-        Dim apiUse = 2
-        Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
-        'Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
+        Dim apiUse = 4
+        'Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
+        Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
 
         'Protocolo de seguridad
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
@@ -59,7 +59,7 @@ Public Class WebForm1
         Dim listApis = JsonConvert.DeserializeObject(apis.response)
 
         'Api que se va a usar
-        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(1).ToString())
+        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(3).ToString())
 
 
         'Get documento
