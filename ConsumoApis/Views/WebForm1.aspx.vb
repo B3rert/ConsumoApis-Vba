@@ -1,11 +1,8 @@
-﻿Imports System.IO
-Imports System.Net
+﻿Imports System.Net
 Imports System.Threading.Tasks
 Imports System.Xml
-Imports System.Xml.Serialization
 Imports Newtonsoft.Json
 Imports System.Net.Http
-Imports System.Net.Http.Headers
 
 Public Class WebForm1
     Inherits System.Web.UI.Page
@@ -22,9 +19,9 @@ Public Class WebForm1
 
     End Sub
 
-    Public Async Function getDataApis() As Task(Of String)
+    Private Async Function getDataApis() As Task(Of String)
 
-
+        Dim usuario = "sa"
         Dim token As String = ""
         Dim certificador = 3
         Dim apiUse = 4
@@ -34,11 +31,11 @@ Public Class WebForm1
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
 
         'Url pruebas
-        Dim urlApis = "http://localhost:9096/api/ApiCatalogo/4/155/ds"
-        Dim urlParametro = $"http://localhost:9096/api/ParametroCatalogo/{apiUse}/ds"
+        Dim urlApis = $"http://localhost:9096/api/ApiCatalogo/4/155/{usuario}"
+        Dim urlParametro = $"http://localhost:9096/api/ParametroCatalogo/{apiUse}/{usuario}"
         'Credenciales y docuemnto
-        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/sa"
-        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/sa"
+        Dim urlDocuemnto = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/{usuario}"
+        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/{usuario}"
 
         'Catalogo apis
         Dim apis = Await GetRequestApi(urlApis)
@@ -75,7 +72,7 @@ Public Class WebForm1
         If api.req_Autorizacion Then
             'Solicitar token
             'certificador/empresa/user
-            Dim urlToken = $"http://localhost:9096/api/Tokens/{certificador}/1/sa"
+            Dim urlToken = $"http://localhost:9096/api/Tokens/{certificador}/1/{usuario}"
             Dim responseToken = Await GetRequestApi(urlToken)
             If responseToken.statusCode <> 200 Then
                 Return responseToken.response
@@ -105,132 +102,135 @@ Public Class WebForm1
 
 
         'Configurar api
-        Dim request = CType(WebRequest.Create(urlApi), HttpWebRequest)
-        request.Method = api.nom_Tipo_Metodo
-        request.Accept = "*/*"
-        'request.Headers.Add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcGVuaWQiXSwiZXhwIjoxNjY0Mzg1MjYwLCJhdXRob3JpdGllcyI6WyJST0xFX0VNSVNPUiJdLCJqdGkiOiJlMjFkNGIyMS1lYWZkLTQzMDctOWNjMC05NzQ0NzIyMzk1MzIiLCJjbGllbnRfaWQiOiI4MzQ2NjM3MSJ9.3D26kQWXbDz3qIqSXwzl3uIJnHVE-ojpRaprlaOrHbhLKOOiB12jTx0rAPD6tixVuxPTkeg_b5EcsYVx5fDq2ezsFi3bCcg0tr2-qMK3M2Tz4g9k63jtCwmiW4O32EWzVykTZQnghg7sZ4EzTBCSbANfqFI0UYX2CGH-4RRd-N_IbveiapPXemQvYSWTCHu3j3fBZM6upHPSLawqLSLu_fqf1r0IgHu8yF4YeWsXE18PzpMDMmjEZkXOtr7gp_Wt_35ZDCPSByIDmNTJUFn8PoysNZFpbU4NOmIzsNuExCc8h20gmceOa5BYJb4X0krd-4HNvOg2OGhnDqkYddx9zg")
+
+        Try
+            Dim client = New HttpClient()
+            Dim builder As UriBuilder = New UriBuilder(urlApi)
+
+            'Verificar headers
+
+            If listParametros.Count <> 0 Then
+
+                For Each i In listParametros
+
+                    Dim parametro = JsonConvert.DeserializeObject(Of CatalogoParametrosModel)(i.ToString())
+
+                    If parametro.tipo_Parametro = 3 Then
+                        'Header 
+                        'Replace params to value and add headers
+                        For Each ii In listCredenciales
+
+                            Dim credencial = JsonConvert.DeserializeObject(Of CredencialModel)(ii.ToString())
+                            If credencial.campo_Nombre = parametro.descripcion And parametro.descripcion <> "Authorization" Then
 
 
+                                client.DefaultRequestHeaders.Add(credencial.campo_Nombre, credencial.campo_Valor)
 
 
-        'Verificar headers
+                            End If
 
-        If listParametros.Count <> 0 Then
+                        Next ii
 
-            For Each i In listParametros
+                        If parametro.descripcion = "Authorization" Then
 
-                Dim parametro = JsonConvert.DeserializeObject(Of CatalogoParametrosModel)(i.ToString())
+                            client.DefaultRequestHeaders.Add("Authorization", token)
 
-                If parametro.tipo_Parametro = 3 Then
-                    'Header 
-                    'Replace params to value and add headers
-                    For Each ii In listCredenciales
-
-                        Dim credencial = JsonConvert.DeserializeObject(Of CredencialModel)(ii.ToString())
-                        If credencial.campo_Nombre = parametro.descripcion And parametro.descripcion <> "Authorization" Then
-
-                            request.Headers.Add(credencial.campo_Nombre, credencial.campo_Valor)
 
                         End If
+                    End If
 
-                    Next ii
+                Next i
+            End If
 
-                    If parametro.descripcion = "Authorization" Then
-                        request.Headers.Add("Authorization", token)
+            Dim contentType = 0
+            Dim content = ""
+
+            'Encontrar parametros en body
+            For index = 0 To listParametros.Count - 1
+                'Get parametro 
+                Dim parametro = JsonConvert.DeserializeObject(Of CatalogoParametrosModel)(listParametros(index).ToString())
+                'Param Body
+                If parametro.tipo_Parametro = 2 Then
+                    'Replace values in param 
+
+                    'Config ContentType 5 Json 6 xml 
+                    If parametro.tipo_Dato = 6 Then
+                        'ContentType
+
+                        contentType = 6
+                        content = replaceValues(parametro.plantilla, token, documento, listCredenciales)
+
+                    Else
+                        'ContentType
+                        contentType = 5
+                        content = replaceValuesJson(parametro.plantilla, token, documento, listCredenciales)
 
                     End If
+
+                    Exit For
                 End If
+            Next
 
-            Next i
-        End If
+            Dim httpContent = New StringContent("", Encoding.UTF8, "application/json")
 
-        'Encontrar parametros en body
-        For index = 0 To listParametros.Count - 1
-            'Get parametro 
-            Dim parametro = JsonConvert.DeserializeObject(Of CatalogoParametrosModel)(listParametros(index).ToString())
-            'Param Body
-            If parametro.tipo_Parametro = 2 Then
-                'Replace values in param 
+            If contentType <> 0 Then
+                If contentType = 5 Then
+                    httpContent = New StringContent(content, Encoding.UTF8, "application/json")
 
-                'Config ContentType 5 Json 6 xml 
-                If parametro.tipo_Dato = 6 Then
-                    'ContentType
-                    request.ContentType = "application/xml"
-
-                    Dim paramValueXml = replaceValues(parametro.plantilla, token, documento, listCredenciales)
-
-                    'Dim pruebaRes = postXMLDataAuth(urlApi, paramValueXml)
-
-                    'MsgBox(pruebaRes)
-
-
-                    'Add param to body api
-                    Dim bytes As Byte()
-                    bytes = Encoding.ASCII.GetBytes(paramValueXml)
-                    request.ContentLength = bytes.Length
-
-                    Dim streamXml As Stream = request.GetRequestStream()
-                    streamXml.Write(bytes, 0, bytes.Length)
-                    streamXml.Close()
-
-                Else
-                    'ContentType
-                    request.ContentType = "application/json"
-                    Dim paramValueJson = replaceValuesJson(parametro.plantilla, token, documento, listCredenciales)
-
-                    'Add param to body api
-                    Using streamWriterJson = New StreamWriter(request.GetRequestStream())
-                        streamWriterJson.Write(paramValueJson)
-                        streamWriterJson.Flush()
-                        streamWriterJson.Close()
-                    End Using
+                ElseIf contentType = 6 Then
+                    httpContent = New StringContent(content, Encoding.UTF8, "application/xml")
 
                 End If
-
-                Exit For
             End If
-        Next
 
+            Dim response
 
+            Select Case api.tipo_Metodo
+                Case 1 'POST
+                    response = Await client.PostAsync(builder.Uri, httpContent)
+                Case 2 'PUT
+                    response = Await client.PutAsync(builder.Uri, httpContent)
+                Case 3 'GET
+                    response = Await client.GetAsync(builder.Uri)
 
-        'Use api 
-        Try
-            Using responseApi As WebResponse = request.GetResponse()
-                Using streamApi As Stream = responseApi.GetResponseStream()
-                    If streamApi Is Nothing Then Return ""
+                Case 4 'DELETE
+                    response = Await client.DeleteAsync(builder.Uri)
 
-                    Using streamReaderApi As StreamReader = New StreamReader(streamApi)
-                        Dim response As String = streamReaderApi.ReadToEnd()
+                Case Else
+                    Return "Solo se permiten los metodos POST, PUT, GET y DELETE"
+            End Select
 
+            Dim result = Await response.Content.ReadAsStringAsync()
 
-                        If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
-                            Dim responseUpdate = Await updateDocDatabase(response, documento.d_Id_Unc)
+            If Not response.IsSuccessStatusCode Then
+                Return result
+            End If
 
-                            Return responseUpdate.response
+            If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
+                Dim responseUpdate = Await updateDocDatabase(result, documento.d_Id_Unc)
 
-                        Else
+                Return responseUpdate.response
 
-                            Dim xml As XmlDocument = New XmlDocument()
-                            xml.LoadXml(response)
-                            Dim xmlNode As XmlNode = xml.SelectSingleNode(api.nodo_FirmaDocumentoResponse)
+            Else
 
-                            Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
+                Dim xml As XmlDocument = New XmlDocument()
+                xml.LoadXml(result)
+                Dim xmlNode As XmlNode = xml.SelectSingleNode(api.nodo_FirmaDocumentoResponse)
 
-                            Return responseUpdate.response
-                        End If
+                Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
 
-                    End Using
-                End Using
-            End Using
+                Return responseUpdate.response
+
+            End If
 
         Catch ex As Exception
-            Return "Can't load Web api" & vbCrLf & ex.Message
+            Return ex.Message
         End Try
 
 
     End Function
 
-    Public Function replaceValuesJson(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object)
+    Private Function replaceValuesJson(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object)
 
         Dim ObjParam = New Dictionary(Of String, Object)
 
@@ -258,7 +258,7 @@ Public Class WebForm1
     End Function
 
 
-    Public Function replaceValues(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object) As String
+    Private Function replaceValues(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object) As String
 
 
         'search params and replace with value
