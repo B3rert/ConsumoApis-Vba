@@ -13,8 +13,10 @@ Public Class WebForm1
 
     Protected Sub btnPrueba_Click(sender As Object, e As EventArgs)
 
+        'LLamar funcion 
         Dim res = getDataApis()
 
+        'Respuestas
         If res.Result.Code <> 200 Then
             'Error
             MsgBox(res.Result.Message, vbCritical, $"{res.Result.Api} ({ res.Result.Code})")
@@ -22,13 +24,11 @@ Public Class WebForm1
             MsgBox(res.Result.Message, vbDefaultButton1, res.Result.Code)
 
         End If
-
-
-
     End Sub
 
     Private Async Function getDataApis() As Task(Of ErrorModel)
 
+        'Variables
         Dim usuario = "sa"
         Dim token As String = ""
         Dim certificador = 3
@@ -36,12 +36,12 @@ Public Class WebForm1
         Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
         'Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
 
+        'Protocolo de seguridad
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
 
-        'Url pruebas
+        'Urls
         Dim urlApis = $"http://localhost:9096/api/ApiCatalogo/4/155/{usuario}"
         Dim urlParametro = $"http://localhost:9096/api/ParametroCatalogo/{apiUse}/{usuario}"
-        'Credenciales y docuemnto
         Dim urlDocumento = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/{usuario}"
         Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/{usuario}"
 
@@ -101,6 +101,7 @@ Public Class WebForm1
                 .Message = responseToken.response
             }
             End If
+
             Dim tokenObj = JsonConvert.DeserializeObject(Of ResponseApiModel)(responseToken.response)
 
             If tokenObj.response.Length > 7 Then
@@ -129,14 +130,12 @@ Public Class WebForm1
         urlApi = replaceValues(urlApi, token, documento, listCredenciales)
 
 
-        'Configurar api
-
         Try
+            'Configurar api
             Dim client = New HttpClient()
             Dim builder As UriBuilder = New UriBuilder(urlApi)
 
             'Verificar headers
-
             If listParametros.Count <> 0 Then
 
                 For Each i In listParametros
@@ -151,10 +150,7 @@ Public Class WebForm1
                             Dim credencial = JsonConvert.DeserializeObject(Of CredencialModel)(ii.ToString())
                             If credencial.campo_Nombre = parametro.descripcion And parametro.descripcion <> "Authorization" Then
 
-
                                 client.DefaultRequestHeaders.Add(credencial.campo_Nombre, credencial.campo_Valor)
-
-
                             End If
 
                         Next ii
@@ -162,7 +158,6 @@ Public Class WebForm1
                         If parametro.descripcion = "Authorization" Then
 
                             client.DefaultRequestHeaders.Add("Authorization", token)
-
 
                         End If
                     End If
@@ -183,13 +178,12 @@ Public Class WebForm1
 
                     'Config ContentType 5 Json 6 xml 
                     If parametro.tipo_Dato = 6 Then
-                        'ContentType
-
+                        'ContentType xml
                         contentType = 6
                         content = replaceValues(parametro.plantilla, token, documento, listCredenciales)
 
                     Else
-                        'ContentType
+                        'ContentType json
                         contentType = 5
                         content = replaceValuesJson(parametro.plantilla, token, documento, listCredenciales)
 
@@ -199,6 +193,7 @@ Public Class WebForm1
                 End If
             Next
 
+            'Agregar contenido
             Dim httpContent = New StringContent("", Encoding.UTF8, "application/json")
 
             If contentType <> 0 Then
@@ -213,6 +208,7 @@ Public Class WebForm1
 
             Dim response
 
+            'Verificar metodo api
             Select Case api.tipo_Metodo
                 Case 1 'POST
                     response = Await client.PostAsync(builder.Uri, httpContent)
@@ -232,6 +228,7 @@ Public Class WebForm1
             }
             End Select
 
+            'Consumir apis
             Dim result = Await response.Content.ReadAsStringAsync()
 
             If Not response.IsSuccessStatusCode Then
@@ -241,6 +238,7 @@ Public Class WebForm1
               .Message = result}
             End If
 
+            'Verificar respuespuestas
             If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
                 Dim responseUpdate = Await updateDocDatabase(result, documento.d_Id_Unc)
 
@@ -258,13 +256,15 @@ Public Class WebForm1
 
             Else
 
+                'Buscar respuesta en nodo especifico 
                 Dim xml As XmlDocument = New XmlDocument()
                 xml.LoadXml(result)
                 Dim xmlNode As XmlNode = xml.SelectSingleNode(api.nodo_FirmaDocumentoResponse)
 
+                'Actualizar campo tabñas
                 Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
 
-
+                'Verificar respiuestas
                 If responseUpdate.statusCode <> 200 Then
                     Return New ErrorModel() With {
               .Code = responseUpdate.statusCode,
@@ -291,7 +291,7 @@ Public Class WebForm1
     End Function
 
     Private Function replaceValuesJson(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object)
-
+        'Remplazar y armat json para param body
         Dim ObjParam = New Dictionary(Of String, Object)
 
         Dim subs As String() = param.Split(","c)
@@ -307,6 +307,7 @@ Public Class WebForm1
 
             Next ii
 
+            'Agregar propiedades y valores al objeto
             subs2(1) = subs2(1).Replace("{token}", token)
             subs2(1) = subs2(1).Replace("{xml_Contenido}", documento.xml_Contenido)
             subs2(1) = subs2(1).Replace("{d_Id_Unc}", documento.d_Id_Unc.ToUpper())
@@ -320,7 +321,6 @@ Public Class WebForm1
 
     Private Function replaceValues(ByVal param As String, ByVal token As String, ByVal documento As DocumentoXmlModel, ByVal listCredenciales As Object) As String
 
-
         'search params and replace with value
         For Each i In listCredenciales
 
@@ -328,9 +328,6 @@ Public Class WebForm1
             param = param.Replace("{" + credencial.campo_Nombre + "}", credencial.campo_Valor)
 
         Next i
-
-        'documento.xml_Contenido = documento.xml_Contenido.Replace("<", "&lt;")
-        'documento.xml_Contenido = documento.xml_Contenido.Replace(">", "&gt;")
 
         'Replace other values
         param = param.Replace("{xml_Contenido}", documento.xml_Contenido)
@@ -344,6 +341,7 @@ Public Class WebForm1
 
     Private Async Function updateDocDatabase(ByVal doc, ByVal uuid) As Task(Of ResponseApiModel)
 
+        'Url acrualizar
         Dim url = "http://localhost:9096/api/DocumentoXml"
         Dim Obj = New Dictionary(Of String, Object) From {
             {"usuario", "sa"},
@@ -353,6 +351,7 @@ Public Class WebForm1
 
         Dim strCuenta = JsonConvert.SerializeObject(Obj)
 
+        'Usar Apis
         Try
             Dim client = New HttpClient()
             Dim builder As UriBuilder = New UriBuilder(url)
@@ -392,6 +391,8 @@ Public Class WebForm1
 
     Private Async Function GetRequestApi(ByVal url As String) As Task(Of ResponseApiModel)
 
+        'Api get usar
+        'Api get usar
         Try
             Dim client = New HttpClient()
             Dim builder As UriBuilder = New UriBuilder(url)
