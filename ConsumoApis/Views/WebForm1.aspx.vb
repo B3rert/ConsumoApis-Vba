@@ -7,6 +7,8 @@ Imports System.Net.Http
 Public Class WebForm1
     Inherits System.Web.UI.Page
 
+    Dim urlApiServer As String = ConfigurationManager.AppSettings.Get("serverApi")
+
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
 
     End Sub
@@ -40,10 +42,10 @@ Public Class WebForm1
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
 
         'Urls
-        Dim urlApis = $"http://localhost:9096/api/ApiCatalogo/4/155/{usuario}"
-        Dim urlParametro = $"http://localhost:9096/api/ParametroCatalogo/{apiUse}/{usuario}"
-        Dim urlDocumento = $"http://localhost:9096/api/DocumentoXml/2/{uuidDoc}/{usuario}"
-        Dim urlCredenciales = $"http://localhost:9096/api/Credenciales/2/{certificador}/1/{usuario}"
+        Dim urlApis = $"{urlApiServer}ApiCatalogo/4/155/{usuario}"
+        Dim urlParametro = $"{urlApiServer}ParametroCatalogo/{apiUse}/{usuario}"
+        Dim urlDocumento = $"{urlApiServer}DocumentoXml/2/{uuidDoc}/{usuario}"
+        Dim urlCredenciales = $"{urlApiServer}Credenciales/2/{certificador}/1/{usuario}"
 
         'Catalogo apis
         Dim apis = Await GetRequestApi(urlApis)
@@ -92,7 +94,7 @@ Public Class WebForm1
         If api.req_Autorizacion Then
             'Solicitar token
             'certificador/empresa/user
-            Dim urlToken = $"http://localhost:9096/api/Tokens/{certificador}/1/{usuario}"
+            Dim urlToken = $"{urlApiServer}Tokens/{certificador}/1/{usuario}"
             Dim responseToken = Await GetRequestApi(urlToken)
             If responseToken.statusCode <> 200 Then
                 Return New ErrorModel() With {
@@ -245,12 +247,12 @@ Public Class WebForm1
                 If responseUpdate.statusCode <> 200 Then
                     Return New ErrorModel() With {
               .Code = responseUpdate.statusCode,
-              .Api = "http://localhost:9096/api/DocumentoXml",
+              .Api = $"{urlApiServer}DocumentoXml",
               .Message = responseUpdate.response}
                 End If
                 Return New ErrorModel() With {
              .Code = responseUpdate.statusCode,
-             .Api = "http://localhost:9096/api/DocumentoXml",
+             .Api = $"{urlApiServer}DocumentoXml",
              .Message = responseUpdate.response}
 
 
@@ -268,12 +270,12 @@ Public Class WebForm1
                 If responseUpdate.statusCode <> 200 Then
                     Return New ErrorModel() With {
               .Code = responseUpdate.statusCode,
-              .Api = "http://localhost:9096/api/DocumentoXml",
+              .Api = $"{urlApiServer}DocumentoXml",
               .Message = responseUpdate.response}
                 End If
                 Return New ErrorModel() With {
              .Code = responseUpdate.statusCode,
-             .Api = "http://localhost:9096/api/DocumentoXml",
+             .Api = $"{urlApiServer}DocumentoXml",
              .Message = responseUpdate.response}
 
             End If
@@ -342,7 +344,7 @@ Public Class WebForm1
     Private Async Function updateDocDatabase(ByVal doc, ByVal uuid) As Task(Of ResponseApiModel)
 
         'Url acrualizar
-        Dim url = "http://localhost:9096/api/DocumentoXml"
+        Dim url = $"{urlApiServer}DocumentoXml"
         Dim Obj = New Dictionary(Of String, Object) From {
             {"usuario", "sa"},
             {"documento", doc},
