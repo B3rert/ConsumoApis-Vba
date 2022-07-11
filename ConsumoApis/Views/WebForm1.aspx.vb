@@ -37,6 +37,7 @@ Public Class WebForm1
         Dim apiUse = 4
         'Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
         Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
+        Dim connectionStr = "Data Source=ds.demosoftonline.com,1541;Initial Catalog=MODEGT;User ID=devtecpan;Password=devtecpan*%"
 
         'Protocolo de seguridad
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
@@ -48,7 +49,7 @@ Public Class WebForm1
         Dim urlCredenciales = $"{urlApiServer}Credenciales/2/{certificador}/1/{usuario}"
 
         'Catalogo apis
-        Dim apis = Await GetRequestApi(urlApis)
+        Dim apis = Await GetRequestApi(urlApis, connectionStr)
 
         If apis.statusCode <> 200 Then
             Return New ErrorModel() With {
@@ -65,7 +66,7 @@ Public Class WebForm1
 
 
         'Get documento
-        Dim documentos = Await GetRequestApi(urlDocumento)
+        Dim documentos = Await GetRequestApi(urlDocumento, connectionStr)
         If documentos.statusCode <> 200 Then
             Return New ErrorModel() With {
                 .Code = documentos.statusCode,
@@ -79,7 +80,7 @@ Public Class WebForm1
         Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
 
         'Get params values (credenciales)
-        Dim credenciales = Await GetRequestApi(urlCredenciales)
+        Dim credenciales = Await GetRequestApi(urlCredenciales, connectionStr)
         If credenciales.statusCode <> 200 Then
             Return New ErrorModel() With {
                 .Code = credenciales.statusCode,
@@ -95,7 +96,7 @@ Public Class WebForm1
             'Solicitar token
             'certificador/empresa/user
             Dim urlToken = $"{urlApiServer}Tokens/{certificador}/1/{usuario}"
-            Dim responseToken = Await GetRequestApi(urlToken)
+            Dim responseToken = Await GetRequestApi(urlToken, connectionStr)
             If responseToken.statusCode <> 200 Then
                 Return New ErrorModel() With {
                 .Code = responseToken.statusCode,
@@ -116,7 +117,7 @@ Public Class WebForm1
         End If
 
         'Catalogo parametros
-        Dim parametros = Await GetRequestApi(urlParametro)
+        Dim parametros = Await GetRequestApi(urlParametro, connectionStr)
         If parametros.statusCode <> 200 Then
             Return New ErrorModel() With {
                 .Code = parametros.statusCode,
@@ -242,7 +243,7 @@ Public Class WebForm1
 
             'Verificar respuespuestas
             If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
-                Dim responseUpdate = Await updateDocDatabase(result, documento.d_Id_Unc)
+                Dim responseUpdate = Await updateDocDatabase(result, documento.d_Id_Unc, connectionStr)
 
                 If responseUpdate.statusCode <> 200 Then
                     Return New ErrorModel() With {
@@ -264,7 +265,7 @@ Public Class WebForm1
                 Dim xmlNode As XmlNode = xml.SelectSingleNode(api.nodo_FirmaDocumentoResponse)
 
                 'Actualizar campo tabñas
-                Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc)
+                Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc, connectionStr)
 
                 'Verificar respiuestas
                 If responseUpdate.statusCode <> 200 Then
@@ -341,7 +342,7 @@ Public Class WebForm1
     End Function
 
 
-    Private Async Function updateDocDatabase(ByVal doc, ByVal uuid) As Task(Of ResponseApiModel)
+    Private Async Function updateDocDatabase(ByVal doc, ByVal uuid, ByVal connectionStr) As Task(Of ResponseApiModel)
 
         'Url acrualizar
         Dim url = $"{urlApiServer}DocumentoXml"
@@ -357,6 +358,7 @@ Public Class WebForm1
         Try
             Dim client = New HttpClient()
             Dim builder As UriBuilder = New UriBuilder(url)
+            client.DefaultRequestHeaders.Add("connectionStr", connectionStr)
             Dim content = New StringContent(strCuenta, Encoding.UTF8, "application/json")
             Dim response = Await client.PostAsync(builder.Uri, content)
             Dim result = Await response.Content.ReadAsStringAsync()
@@ -391,13 +393,14 @@ Public Class WebForm1
     End Function
 
 
-    Private Async Function GetRequestApi(ByVal url As String) As Task(Of ResponseApiModel)
+    Private Async Function GetRequestApi(ByVal url As String, ByVal connectionStr As String) As Task(Of ResponseApiModel)
 
         'Api get usar
         'Api get usar
         Try
             Dim client = New HttpClient()
             Dim builder As UriBuilder = New UriBuilder(url)
+            client.DefaultRequestHeaders.Add("connectionStr", connectionStr)
             Dim response = Await client.GetAsync(builder.Uri)
             Dim result = Await response.Content.ReadAsStringAsync()
 
