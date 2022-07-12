@@ -43,7 +43,7 @@ Public Class WebForm1
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
 
         'Urls
-        Dim urlApis = $"{urlApiServer}ApiCatalogo/4/155/{usuario}"
+        Dim urlApis = $"{urlApiServer}ApiCatalogo/3/{apiUse}/{usuario}"
         Dim urlParametro = $"{urlApiServer}ParametroCatalogo/{apiUse}/{usuario}"
         Dim urlDocumento = $"{urlApiServer}DocumentoXml/2/{uuidDoc}/{usuario}"
         Dim urlCredenciales = $"{urlApiServer}Credenciales/2/{certificador}/1/{usuario}"
@@ -62,7 +62,7 @@ Public Class WebForm1
         Dim listApis = JsonConvert.DeserializeObject(apis.response)
 
         'Api que se va a usar
-        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(3).ToString())
+        Dim api = JsonConvert.DeserializeObject(Of CatalogoApiModel)(listApis(0).ToString())
 
 
         'Get documento
