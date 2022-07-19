@@ -13,7 +13,7 @@ Public Class WebForm1
 
     End Sub
 
-    Protected Sub btnPrueba_Click(sender As Object, e As EventArgs)
+    Protected Sub btnPrueba_Click(sender As Object, e As EventArgs) Handles btnPrueba.Click
 
         'LLamar funcion 
         Dim res = getDataApis()
@@ -37,6 +37,7 @@ Public Class WebForm1
         Dim apiUse = 4
         Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
         Dim connectionStr = "Data Source=ds.demosoftonline.com,1541;Initial Catalog=MODEGT;User ID=devtecpan;Password=devtecpan*%"
+        Dim apiToken = 6
         'Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
 
         'Protocolo de seguridad
@@ -49,7 +50,7 @@ Public Class WebForm1
         Dim urlCredenciales = $"{urlApiServer}Credenciales/2/{certificador}/1/{usuario}"
 
         'Catalogo apis
-        Dim apis = Await GetRequestApi(urlApis, connectionStr)
+        Dim apis = Await GetRequestApi(urlApis, connectionStr, 0)
 
         If apis.statusCode <> 200 Then
             Return New ErrorModel() With {
@@ -66,7 +67,7 @@ Public Class WebForm1
 
 
         'Get documento
-        Dim documentos = Await GetRequestApi(urlDocumento, connectionStr)
+        Dim documentos = Await GetRequestApi(urlDocumento, connectionStr, 0)
         If documentos.statusCode <> 200 Then
             Return New ErrorModel() With {
                 .Code = documentos.statusCode,
@@ -80,7 +81,7 @@ Public Class WebForm1
         Dim documento = JsonConvert.DeserializeObject(Of DocumentoXmlModel)(listDocumento(0).ToString())
 
         'Get params values (credenciales)
-        Dim credenciales = Await GetRequestApi(urlCredenciales, connectionStr)
+        Dim credenciales = Await GetRequestApi(urlCredenciales, connectionStr, 0)
         If credenciales.statusCode <> 200 Then
             Return New ErrorModel() With {
                 .Code = credenciales.statusCode,
@@ -96,7 +97,7 @@ Public Class WebForm1
             'Solicitar token
             'certificador/empresa/user
             Dim urlToken = $"{urlApiServer}Tokens/{certificador}/1/{usuario}"
-            Dim responseToken = Await GetRequestApi(urlToken, connectionStr)
+            Dim responseToken = Await GetRequestApi(urlToken, connectionStr, apiToken)
             If responseToken.statusCode <> 200 Then
                 Return New ErrorModel() With {
                 .Code = responseToken.statusCode,
@@ -117,7 +118,7 @@ Public Class WebForm1
         End If
 
         'Catalogo parametros
-        Dim parametros = Await GetRequestApi(urlParametro, connectionStr)
+        Dim parametros = Await GetRequestApi(urlParametro, connectionStr, 0)
         If parametros.statusCode <> 200 Then
             Return New ErrorModel() With {
                 .Code = parametros.statusCode,
@@ -393,7 +394,7 @@ Public Class WebForm1
     End Function
 
 
-    Private Async Function GetRequestApi(ByVal url As String, ByVal connectionStr As String) As Task(Of ResponseApiModel)
+    Private Async Function GetRequestApi(ByVal url As String, ByVal connectionStr As String, ByVal apiToken As Integer) As Task(Of ResponseApiModel)
 
         'Api get usar
         'Api get usar
@@ -401,6 +402,7 @@ Public Class WebForm1
             Dim client = New HttpClient()
             Dim builder As UriBuilder = New UriBuilder(url)
             client.DefaultRequestHeaders.Add("connectionStr", connectionStr)
+            client.DefaultRequestHeaders.Add("apiToken", apiToken)
             Dim response = Await client.GetAsync(builder.Uri)
             Dim result = Await response.Content.ReadAsStringAsync()
 
