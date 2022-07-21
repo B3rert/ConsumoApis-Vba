@@ -159,15 +159,13 @@ Public Class WebForm1
 
                         Next ii
 
-                        If parametro.descripcion = "Authorization" Then
-
-                            client.DefaultRequestHeaders.Add("Authorization", token)
-
-                        End If
                     End If
 
                 Next i
             End If
+
+            client.DefaultRequestHeaders.Add("Authorization", token)
+            client.DefaultRequestHeaders.Add("connectionStr", connectionStr)
 
             Dim contentType = 0
             Dim content = ""
