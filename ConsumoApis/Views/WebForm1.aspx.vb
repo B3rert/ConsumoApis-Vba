@@ -30,6 +30,7 @@ Public Class WebForm1
 
     Private Async Function getDataApis() As Task(Of ErrorModel)
 
+
         'Variables
         Dim token As String = ""
         Dim usuario = "sa"
