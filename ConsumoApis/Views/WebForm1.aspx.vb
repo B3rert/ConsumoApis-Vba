@@ -35,11 +35,12 @@ Public Class WebForm1
         Dim token As String = ""
         Dim usuario = "sa"
         Dim certificador = 3
-        Dim apiUse = 2
-        'Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
+        Dim apiUse = 4
+        Dim uuidDoc = "261406A3-8D69-4DD5-B856-3A1F447D5CF3"
         Dim connectionStr = "Data Source=ds.demosoftonline.com,1541;Initial Catalog=MODEGT;User ID=devtecpan;Password=devtecpan*%"
         Dim apiToken = 6
-        Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
+        'Dim apiUse = 2
+        'Dim uuidDoc = "6C27FF05-5BAF-47E5-8A1C-2F67B5FDE270"
 
         'Protocolo de seguridad
         ServicePointManager.SecurityProtocol = CType((768 Or 3072), SecurityProtocolType)
@@ -243,7 +244,7 @@ Public Class WebForm1
 
             'Verificar respuespuestas
             If String.IsNullOrEmpty(api.nodo_FirmaDocumentoResponse) Then
-                Dim responseUpdate = Await updateDocDatabase(result, documento.d_Id_Unc, connectionStr)
+                Dim responseUpdate = Await updateDocDatabase(result, documento.d_Id_Unc, connectionStr, result )
 
                 If responseUpdate.statusCode <> 200 Then
                     Return New ErrorModel() With {
@@ -265,7 +266,7 @@ Public Class WebForm1
                 Dim xmlNode As XmlNode = xml.SelectSingleNode(api.nodo_FirmaDocumentoResponse)
 
                 'Actualizar campo tabñas
-                Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc, connectionStr)
+                Dim responseUpdate = Await updateDocDatabase(xmlNode.InnerText, documento.d_Id_Unc, connectionStr, result)
 
                 'Verificar respiuestas
                 If responseUpdate.statusCode <> 200 Then
@@ -343,14 +344,15 @@ Public Class WebForm1
     End Function
 
 
-    Private Async Function updateDocDatabase(ByVal doc, ByVal uuid, ByVal connectionStr) As Task(Of ResponseApiModel)
+    Private Async Function updateDocDatabase(ByVal doc, ByVal uuid, ByVal connectionStr, ByVal documento) As Task(Of ResponseApiModel)
 
         'Url acrualizar
         Dim url = $"{urlApiServer}DocumentoXml"
         Dim Obj = New Dictionary(Of String, Object) From {
             {"usuario", "sa"},
             {"documento", doc},
-            {"uuid", uuid}
+            {"uuid", uuid},
+            {"documentoCompleto", documento}
         }
 
         Dim strCuenta = JsonConvert.SerializeObject(Obj)
