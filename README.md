@@ -22,3 +22,4 @@ Esta propiedad deberá tener el nombre serverApi y deberá contener la url inici
 
 ## Notas
 * Es posible que el proyecto no funcione si no cuenta con la base de datos necesaria.
+* Si no se cuenta con servicios de algun certificador, el proceso no es funcional.
