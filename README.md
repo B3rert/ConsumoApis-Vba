@@ -23,3 +23,4 @@ Esta propiedad deberá tener el nombre serverApi y deberá contener la url inici
 ## Notas
 * Es posible que el proyecto no funcione si no cuenta con la base de datos necesaria.
 * Si no se cuenta con servicios de algun certificador, el proceso no es funcional.
+* Documentacion del proyecto completo (Tablas y APIS) [aquí](https://drive.google.com/file/d/1KQ6AD5OJRj6nccuNhMgnrurbi37AgoSN/view?usp=sharing).
