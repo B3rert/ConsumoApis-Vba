@@ -23,4 +23,5 @@ Esta propiedad deberá tener el nombre serverApi y deberá contener la url inici
 ## Notas
 * Es posible que el proyecto no funcione si no cuenta con la base de datos necesaria.
 * Si no se cuenta con servicios de algun certificador, el proceso no es funcional.
+* Los servicios correspondientes para obtner la infromación necesaria para el proceso deben estar ejecutandose a la vez que este proyecto, encuentre el proyecto [aquí](https://github.com/B3rert/ApiDocs.git). 
 * Documentacion del proyecto completo (Tablas y APIS) [aquí](https://drive.google.com/file/d/1KQ6AD5OJRj6nccuNhMgnrurbi37AgoSN/view?usp=sharing).
